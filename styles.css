@@ -1,4 +1,4 @@
-:root {
+1:root {
     --primary: #4a76f8;
     --secondary: #8e44ad;
     --player-bg: rgba(30, 30, 45, 0.9);
@@ -406,4 +406,46 @@ button:focus, input:focus {
 
 .favorite-btn.pulse {
     animation: pulse 0.5s ease;
+}
+:root {
+    --primary: #4a76f8;
+    --secondary: #8e44ad;
+    --player-bg: rgba(30, 30, 45, 0.9);
+    --favorite-color: #ff4d4d;
+}
+
+/* [Previous CSS content remains exactly the same until the end] */
+
+/* Add these new rules at the end */
+.album-art {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+#album-cover {
+    transition: opacity 0.3s;
+    position: relative;
+    z-index: 1;
+}
+
+#album-cover[src=""] {
+    opacity: 0;
+}
+
+.album-art.fallback {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+}
+
+.album-art.fallback::after {
+    content: "🎵";
+    font-size: 4rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+}
+
+.album-art.fallback .record {
+    z-index: 2;
 }
