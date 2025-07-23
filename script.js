@@ -1,4 +1,4 @@
-// DOM Elements
+1// DOM Elements
 const audio = document.getElementById('audio');
 const playBtn = document.getElementById('play-btn');
 const playIcon = document.getElementById('play-icon');
@@ -29,26 +29,26 @@ const songs = [
     {
         title: 'Stereo Love',
         artist: 'Edward Maya & Vika Jigulina',
-        src: 'streo.mp3',
-        cover: 'streo.jpg'
+        src: 'songs/streo.mp3',
+        cover: 'imge/streo.jpg'
     },
     {
         title: 'Hotel California',
         artist: 'Eagles',
-        src: 'Hotel.mp3',
-        cover: 'hotel.jpg'
+        src: 'songs/Hotel.mp3',
+        cover: 'imge/hotel.jpg'
     },
     {
         title: 'Come and Get Your Love',
         artist: 'Redbone',
-        src: 'Redbone.mp3',
-        cover: 'redbone.jpeg'
+        src: 'songs/Redbone.mp3',
+        cover: 'imge/redbone.jpeg'
     },
     {
         title: 'I Was Made For Lovin\' You',
         artist: 'Kiss',
-        src: 'kiss.mp3',
-        cover: 'kiss.jpg'
+        src: 'songs/kiss.mp3',
+        cover: 'imge/kiss.jpg'
     }
 ];
 
@@ -56,7 +56,6 @@ let currentSongIndex = 0;
 let isPlaying = false;
 let isShuffled = false;
 let isRepeated = false;
-let shuffleHistory = [];
 
 // Initialize Player
 function initPlayer() {
@@ -64,11 +63,6 @@ function initPlayer() {
     renderPlaylist();
     audio.volume = volumeSlider.value;
     updateFavoriteButton();
-    
-    // Set tabindex for all focusable elements
-    document.querySelectorAll('button, [tabindex]').forEach(el => {
-        el.setAttribute('tabindex', '0');
-    });
 }
 
 // Load Song
@@ -77,16 +71,26 @@ function loadSong(song) {
     artistEl.textContent = song.artist;
     audio.src = song.src;
     
-    // Set album art and background
-    albumCover.src = song.cover;
-    albumCover.onerror = () => {
-        albumCover.src = 'default-cover.jpg';
-    };
-    backgroundPoster.style.backgroundImage = `url('${song.cover}')`;
+    // Reset album art
+    albumCover.style.display = 'block';
+    albumCover.parentElement.classList.remove('fallback');
     
-    // Update playlist highlight
-    updatePlaylistHighlight();
-    updateFavoriteButton();
+    // Set album cover with fallback
+    albumCover.onerror = () => {
+        albumCover.style.display = 'none';
+        albumCover.parentElement.classList.add('fallback');
+    };
+    albumCover.src = song.cover;
+    
+    // Set background poster
+    const bgImg = new Image();
+    bgImg.onload = () => {
+        backgroundPoster.style.backgroundImage = `url('${song.cover}')`;
+    };
+    bgImg.onerror = () => {
+        backgroundPoster.style.backgroundImage = '';
+    };
+    bgImg.src = song.cover;
     
     // Reset progress
     progressBar.style.width = '0%';
@@ -94,59 +98,63 @@ function loadSong(song) {
     currentTimeEl.textContent = '0:00';
     durationEl.textContent = '0:00';
     
-    // If already playing, continue playback
+    // Play if already playing
     if (isPlaying) {
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.log("Playback prevented:", error);
-                isPlaying = false;
-                playIcon.classList.replace('fa-pause', 'fa-play');
-            });
-        }
+        audio.play().catch(error => {
+            console.log("Playback prevented:", error);
+            isPlaying = false;
+            updatePlayButton();
+        });
     }
 }
 
-// Play/Pause
+// Play/Pause Controls
 function togglePlay() {
-    if (isPlaying) {
-        pauseSong();
-    } else {
+    if (audio.paused) {
         playSong();
+    } else {
+        pauseSong();
     }
 }
 
 function playSong() {
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-        playPromise.then(() => {
+    audio.play()
+        .then(() => {
             isPlaying = true;
-            playIcon.classList.replace('fa-play', 'fa-pause');
-        }).catch(error => {
-            console.log("Playback prevented:", error);
+            updatePlayButton();
+        })
+        .catch(error => {
+            console.log("Playback error:", error);
+            isPlaying = false;
+            updatePlayButton();
         });
-    }
 }
 
 function pauseSong() {
     audio.pause();
     isPlaying = false;
-    playIcon.classList.replace('fa-pause', 'fa-play');
+    updatePlayButton();
 }
 
-// Navigation
+function updatePlayButton() {
+    playIcon.classList.toggle('fa-play', !isPlaying);
+    playIcon.classList.toggle('fa-pause', isPlaying);
+}
+
+// Navigation Controls
 function prevSong() {
-    currentSongIndex--;
-    if (currentSongIndex < 0) {
-        currentSongIndex = songs.length - 1;
-    }
+    currentSongIndex = (currentSongIndex - 1 + songs.length) % songs.length;
     loadSong(songs[currentSongIndex]);
     if (isPlaying) playSong();
 }
 
 function nextSong() {
     if (isShuffled) {
-        shuffleSong();
+        let newIndex;
+        do {
+            newIndex = Math.floor(Math.random() * songs.length);
+        } while (newIndex === currentSongIndex && songs.length > 1);
+        currentSongIndex = newIndex;
     } else {
         currentSongIndex = (currentSongIndex + 1) % songs.length;
     }
@@ -154,27 +162,45 @@ function nextSong() {
     if (isPlaying) playSong();
 }
 
-function shuffleSong() {
-    let randomIndex;
-    do {
-        randomIndex = Math.floor(Math.random() * songs.length);
-    } while (randomIndex === currentSongIndex && songs.length > 1);
-    
-    shuffleHistory.push(currentSongIndex);
-    if (shuffleHistory.length > 10) shuffleHistory.shift();
-    
-    currentSongIndex = randomIndex;
-}
-
 function toggleShuffle() {
     isShuffled = !isShuffled;
     shuffleBtn.classList.toggle('active', isShuffled);
-    if (!isShuffled) shuffleHistory = [];
 }
 
 function toggleRepeat() {
     isRepeated = !isRepeated;
     repeatBtn.classList.toggle('active', isRepeated);
+}
+
+// Progress Bar
+function updateProgress(e) {
+    const { duration, currentTime } = e.srcElement;
+    const progressPercent = (currentTime / duration) * 100;
+    progressBar.style.width = `${progressPercent}%`;
+    progressThumb.style.left = `${progressPercent}%`;
+    
+    // Update time display
+    const durationMinutes = Math.floor(duration / 60);
+    let durationSeconds = Math.floor(duration % 60);
+    if (durationSeconds < 10) durationSeconds = `0${durationSeconds}`;
+    if (durationSeconds) durationEl.textContent = `${durationMinutes}:${durationSeconds}`;
+    
+    const currentMinutes = Math.floor(currentTime / 60);
+    let currentSeconds = Math.floor(currentTime % 60);
+    if (currentSeconds < 10) currentSeconds = `0${currentSeconds}`;
+    currentTimeEl.textContent = `${currentMinutes}:${currentSeconds}`;
+}
+
+function setProgress(e) {
+    const width = this.clientWidth;
+    const clickX = e.offsetX;
+    const duration = audio.duration;
+    audio.currentTime = (clickX / width) * duration;
+}
+
+// Volume Control
+function setVolume() {
+    audio.volume = volumeSlider.value;
 }
 
 // Favorites System
@@ -184,20 +210,13 @@ function toggleFavorite() {
     
     if (favorites.includes(currentSongId)) {
         favorites.splice(favorites.indexOf(currentSongId), 1);
-        favoriteBtn.classList.remove('pulse');
     } else {
         favorites.push(currentSongId);
-        favoriteBtn.classList.add('pulse');
     }
     
     localStorage.setItem('musicPlayerFavorites', JSON.stringify(favorites));
     updateFavoriteButton();
     renderPlaylist();
-    
-    // Remove pulse class after animation
-    setTimeout(() => {
-        favoriteBtn.classList.remove('pulse');
-    }, 500);
 }
 
 function getFavorites() {
@@ -221,7 +240,6 @@ function updateFavoriteButton() {
 function renderPlaylist() {
     const favorites = getFavorites();
     
-    // Clear existing content
     playlistFavorites.innerHTML = '';
     playlistAll.innerHTML = '';
     
@@ -257,7 +275,6 @@ function createPlaylistItem(song, index) {
     if (index === currentSongIndex) item.classList.add('playing');
     
     const isFavorited = getFavorites().includes(song.src);
-    if (isFavorited) item.classList.add('favorited');
     
     item.innerHTML = `
         <div class="song-info">
@@ -267,17 +284,13 @@ function createPlaylistItem(song, index) {
         <i class="${isFavorited ? 'fas' : 'far'} fa-heart favorite-icon"></i>
     `;
     
-    item.addEventListener('click', (e) => {
-        // Don't trigger if clicking the favorite icon
-        if (!e.target.classList.contains('favorite-icon')) {
-            currentSongIndex = index;
-            loadSong(songs[currentSongIndex]);
-            playSong();
-            togglePlaylist();
-        }
+    item.addEventListener('click', () => {
+        currentSongIndex = index;
+        loadSong(songs[currentSongIndex]);
+        playSong();
+        togglePlaylist();
     });
     
-    // Add favorite toggle to the icon
     const favIcon = item.querySelector('.favorite-icon');
     favIcon.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -288,54 +301,11 @@ function createPlaylistItem(song, index) {
     return item;
 }
 
-function updatePlaylistHighlight() {
-    document.querySelectorAll('.playlist-item').forEach(item => {
-        item.classList.remove('playing');
-    });
-    
-    const currentItems = document.querySelectorAll(`.playlist-item:nth-child(${currentSongIndex + 2})`);
-    currentItems.forEach(item => {
-        item.classList.add('playing');
-    });
-}
-
-// Progress Bar
-function updateProgress(e) {
-    const { duration, currentTime } = e.srcElement;
-    const progressPercent = (currentTime / duration) * 100;
-    progressBar.style.width = `${progressPercent}%`;
-    progressThumb.style.left = `${progressPercent}%`;
-    
-    // Duration display
-    const durationMinutes = Math.floor(duration / 60);
-    let durationSeconds = Math.floor(duration % 60);
-    if (durationSeconds < 10) durationSeconds = `0${durationSeconds}`;
-    if (durationSeconds) durationEl.textContent = `${durationMinutes}:${durationSeconds}`;
-    
-    // Current time display
-    const currentMinutes = Math.floor(currentTime / 60);
-    let currentSeconds = Math.floor(currentTime % 60);
-    if (currentSeconds < 10) currentSeconds = `0${currentSeconds}`;
-    currentTimeEl.textContent = `${currentMinutes}:${currentSeconds}`;
-}
-
-function setProgress(e) {
-    const width = this.clientWidth;
-    const clickX = e.offsetX;
-    const duration = audio.duration;
-    audio.currentTime = (clickX / width) * duration;
-}
-
-// Volume Control
-function setVolume() {
-    audio.volume = volumeSlider.value;
-}
-
 // Playlist Modal
 function togglePlaylist() {
     playlistModal.style.display = playlistModal.style.display === 'flex' ? 'none' : 'flex';
     if (playlistModal.style.display === 'flex') {
-        updatePlaylistHighlight();
+        renderPlaylist();
     }
 }
 
@@ -346,6 +316,7 @@ nextBtn.addEventListener('click', nextSong);
 shuffleBtn.addEventListener('click', toggleShuffle);
 repeatBtn.addEventListener('click', toggleRepeat);
 favoriteBtn.addEventListener('click', toggleFavorite);
+
 audio.addEventListener('timeupdate', updateProgress);
 audio.addEventListener('ended', () => {
     if (isRepeated) {
@@ -355,12 +326,12 @@ audio.addEventListener('ended', () => {
         nextSong();
     }
 });
+
 progressContainer.addEventListener('click', setProgress);
 volumeSlider.addEventListener('input', setVolume);
 playlistBtn.addEventListener('click', togglePlaylist);
 closePlaylist.addEventListener('click', togglePlaylist);
 
-// Close modal when clicking outside
 playlistModal.addEventListener('click', (e) => {
     if (e.target === playlistModal) {
         togglePlaylist();
@@ -369,36 +340,36 @@ playlistModal.addEventListener('click', (e) => {
 
 // Keyboard Controls
 document.addEventListener('keydown', (e) => {
-    switch (e.key) {
-        case ' ':
-            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT') {
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        switch (e.key) {
+            case ' ':
                 e.preventDefault();
                 togglePlay();
-            }
-            break;
-        case 'ArrowLeft':
-            prevSong();
-            break;
-        case 'ArrowRight':
-            nextSong();
-            break;
-        case 's':
-            toggleShuffle();
-            break;
-        case 'r':
-            toggleRepeat();
-            break;
-        case 'f':
-            toggleFavorite();
-            break;
-        case 'p':
-            togglePlaylist();
-            break;
-        case 'Escape':
-            playlistModal.style.display = 'none';
-            break;
+                break;
+            case 'ArrowLeft':
+                prevSong();
+                break;
+            case 'ArrowRight':
+                nextSong();
+                break;
+            case 's':
+                toggleShuffle();
+                break;
+            case 'r':
+                toggleRepeat();
+                break;
+            case 'f':
+                toggleFavorite();
+                break;
+            case 'p':
+                togglePlaylist();
+                break;
+            case 'Escape':
+                playlistModal.style.display = 'none';
+                break;
+        }
     }
 });
 
-// Initialize
+// Initialize Player
 initPlayer();
