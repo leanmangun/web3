@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+1<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,29 +6,38 @@
     <title>Modern Music Player</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .album-art.fallback {
+            background: linear-gradient(135deg, #4a76f8 0%, #8e44ad 100%);
+        }
+        .album-art.fallback::after {
+            content: "🎵";
+            font-size: 4rem;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
 </head>
 <body>
     <div class="background-poster" id="background-poster"></div>
     
     <div class="player-container">
-        <!-- Favorite Button -->
         <button class="control-btn favorite-btn" id="favorite-btn" tabindex="0" aria-label="Add to favorites">
             <i class="far fa-heart" id="favorite-icon"></i>
         </button>
 
-        <!-- Album Art -->
         <div class="album-art" id="album-art">
             <img id="album-cover" src="" alt="Album Cover">
             <div class="record"></div>
         </div>
         
-        <!-- Song Info -->
         <div class="song-info">
             <div class="song-title" id="song-title">Unknown Song</div>
             <div class="artist" id="artist">Unknown Artist</div>
         </div>
         
-        <!-- Progress Bar -->
         <div class="progress-container" id="progress-container">
             <div class="progress-bar" id="progress-bar"></div>
             <div class="progress-thumb" id="progress-thumb"></div>
@@ -38,7 +47,6 @@
             <span id="duration">0:00</span>
         </div>
         
-        <!-- Controls -->
         <div class="controls">
             <button class="control-btn" id="shuffle-btn" tabindex="0" aria-label="Shuffle">
                 <i class="fas fa-random"></i>
@@ -57,19 +65,16 @@
             </button>
         </div>
         
-        <!-- Volume Control -->
         <div class="volume-control">
             <i class="fas fa-volume-up"></i>
             <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.7" tabindex="0" aria-label="Volume">
         </div>
         
-        <!-- Playlist Button -->
         <button class="playlist-btn" id="playlist-btn" tabindex="0" aria-label="Show Playlist">
             <i class="fas fa-list"></i> Playlist
         </button>
     </div>
 
-    <!-- Playlist Modal -->
     <div class="playlist-modal" id="playlist-modal">
         <div class="playlist-content">
             <h3>Playlist</h3>
