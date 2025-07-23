@@ -1,4 +1,4 @@
-1// DOM Elements
+// DOM Elements
 const audio = document.getElementById('audio');
 const playBtn = document.getElementById('play-btn');
 const playIcon = document.getElementById('play-icon');
